@@ -95,6 +95,7 @@ def render(data, site_url):
         '<title>' + esc(title) + '</title>',
         '<meta name="description" content="' + esc(DESCRIPTION, quote=True) + '" />',
         '<meta name="robots" content="index,follow,max-image-preview:large" />',
+        '<meta name="google-site-verification" content="SYQRHWjyH0b8V699j59dBfKEKXkt1B0E6kS6kF0TZhU" />',
         '<link rel="canonical" href="' + esc(site_url, quote=True) + '" />',
         '<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />',
         '<meta property="og:type" content="website" />',
