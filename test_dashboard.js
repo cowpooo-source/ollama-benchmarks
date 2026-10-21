@@ -52,6 +52,7 @@ for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
   const end = html.indexOf('// Auto-refresh control', start);
   vm.runInContext(html.slice(start, end), context);
   const snapshot = JSON.parse(fs.readFileSync('results.json', 'utf8'));
+  context.DEFAULT_LABELS = snapshot.labels;
   await loadFolder({target: {files: [{name: 'results.json', text: async () => JSON.stringify(snapshot)}]}});
   assert.equal(imported.runs.length, snapshot.runs.length);
   assert.equal(imported.records[0].run, snapshot.records[0].run);
