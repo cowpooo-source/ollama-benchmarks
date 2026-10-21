@@ -19,6 +19,8 @@ python ollama_bench.py --serve --port 8080
 
 Runs are saved to the ignored `bench_results/<run-id>/` directory as JSON, CSV, and Markdown. Local dashboard generation updates `index.html`; it does not change the published `results.json` automatically.
 
+Before you have local runs, `--serve` displays the included published snapshot. Importing a published `results.json` folder preserves its run IDs, hardware, and settings. If a folder also contains per-run result files, those take precedence over its consolidated snapshot.
+
 **Q11 executes model-generated Python with your user permissions in a timed subprocess. This is not a security sandbox.** Use `--no-exec` to leave that task ungraded.
 
 ## Publish updated results

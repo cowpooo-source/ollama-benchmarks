@@ -1381,6 +1381,7 @@ el('folder-picker').addEventListener('change', async (e) => {
 
   const loadedRuns = [];
   const loadedRecords = [];
+  let publishedSnapshot = null;
 
   for (const f of jsonFiles) {
     try {
@@ -1388,7 +1389,9 @@ el('folder-picker').addEventListener('change', async (e) => {
       const data = JSON.parse(text);
       const runId = f.webkitRelativePath ? f.webkitRelativePath.split('/')[1] || f.name : f.name;
 
-      if (Array.isArray(data)) {
+      if (Array.isArray(data.runs) && Array.isArray(data.records)) {
+        publishedSnapshot = data;
+      } else if (Array.isArray(data)) {
         loadedRuns.push({ id: runId, count: data.length, models: [...new Set(data.map(x => x.model))] });
         data.forEach(r => { loadedRecords.push({ ...r, run: runId }); });
       } else if (data.records) {
@@ -1400,6 +1403,10 @@ el('folder-picker').addEventListener('change', async (e) => {
     }
   }
 
+  if (!loadedRecords.length && publishedSnapshot) {
+    loadedRuns.push(...publishedSnapshot.runs);
+    loadedRecords.push(...publishedSnapshot.records);
+  }
   if (loadedRecords.length) {
     clearInterval(AUTO_REFRESH_TIMER);
     el('auto-refresh-select').value = '0';

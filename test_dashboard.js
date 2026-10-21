@@ -39,4 +39,22 @@ for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
   if (/application\/(?:ld\+)?json/.test(match[1])) JSON.parse(match[2]);
   else new vm.Script(match[2]);
 }
-console.log('Dashboard statistics and heatmap tests passed');
+
+(async () => {
+  let loadFolder;
+  let imported;
+  context.AUTO_REFRESH_TIMER = null;
+  context.clearInterval = () => {};
+  context.toast = () => {};
+  context.processData = data => { imported = data; };
+  context.el = id => ({addEventListener: (event, callback) => { if (id === 'folder-picker') loadFolder = callback; }});
+  const start = html.indexOf("el('folder-picker').addEventListener('change'");
+  const end = html.indexOf('// Auto-refresh control', start);
+  vm.runInContext(html.slice(start, end), context);
+  const snapshot = JSON.parse(fs.readFileSync('results.json', 'utf8'));
+  await loadFolder({target: {files: [{name: 'results.json', text: async () => JSON.stringify(snapshot)}]}});
+  assert.equal(imported.runs.length, snapshot.runs.length);
+  assert.equal(imported.records[0].run, snapshot.records[0].run);
+  assert.equal(imported.runs[0].system.gpu, snapshot.runs[0].system.gpu);
+  console.log('Dashboard statistics, rendering, import, and syntax tests passed');
+})().catch(error => { console.error(error); process.exitCode = 1; });

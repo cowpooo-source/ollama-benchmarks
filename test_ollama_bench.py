@@ -77,6 +77,32 @@ class BenchmarkTests(unittest.TestCase):
             self.assertEqual(bench.main(['--selftest']), 0)
         build.assert_not_called()
 
+    def test_empty_local_runs_do_not_overwrite_published_page(self):
+        with temporary_directory() as tmp:
+            output = Path(tmp, 'index.html')
+            snapshot = '<script type="application/json" id="dashboard-data">{"records":[1]}</script>'
+            output.write_text(snapshot, encoding='utf-8')
+            with patch.object(bench, 'build_dashboard_data', return_value={'records': []}):
+                bench.build_dashboard(os.path.join(tmp, 'bench_results'), str(output))
+            self.assertEqual(output.read_text(encoding='utf-8'), snapshot)
+
+    def test_empty_api_uses_published_snapshot(self):
+        with temporary_directory() as tmp:
+            handler = bench.partial(bench.DashboardHandler, bench_dir=tmp)
+            server = bench.http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
+            worker = threading.Thread(target=server.serve_forever, daemon=True)
+            worker.start()
+            try:
+                with patch.object(bench, 'build_dashboard_data', return_value={'records': []}):
+                    with bench.urllib.request.urlopen(f'http://127.0.0.1:{server.server_port}/api/results') as response:
+                        data = json.load(response)
+                    expected = json.loads(Path(bench.__file__).with_name('results.json').read_text(encoding='utf-8'))
+                    self.assertEqual(data, expected)
+            finally:
+                server.shutdown()
+                server.server_close()
+                worker.join()
+
     def test_server_reads_configured_results_directory(self):
         with temporary_directory() as tmp:
             handler = bench.partial(bench.DashboardHandler, bench_dir=tmp)
@@ -84,9 +110,9 @@ class BenchmarkTests(unittest.TestCase):
             worker = threading.Thread(target=server.serve_forever, daemon=True)
             worker.start()
             try:
-                with patch.object(bench, 'build_dashboard_data', return_value={'records': []}) as build:
+                with patch.object(bench, 'build_dashboard_data', return_value={'records': [{'model': 'mock'}]}) as build:
                     with bench.urllib.request.urlopen(f'http://127.0.0.1:{server.server_port}/api/results') as response:
-                        self.assertEqual(json.load(response), {'records': []})
+                        self.assertEqual(json.load(response), {'records': [{'model': 'mock'}]})
                     build.assert_called_once_with(tmp)
             finally:
                 server.shutdown()

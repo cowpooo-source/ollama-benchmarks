@@ -731,6 +731,8 @@ def build_dashboard_data(bench_dir="bench_results"):
 def build_dashboard(bench_dir="bench_results", out_html="index.html"):
     """Write the consolidated index and embed it in a standalone dashboard."""
     data = build_dashboard_data(bench_dir)
+    if not data["records"]:
+        return
     os.makedirs(bench_dir, exist_ok=True)
 
     # Save index.json for HTTP fetch
@@ -777,6 +779,13 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/api/results":
             data = build_dashboard_data(self.bench_dir)
+            if not data["records"]:
+                published = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results.json")
+                try:
+                    with open(published, encoding="utf-8") as snapshot:
+                        data = json.load(snapshot)
+                except (OSError, ValueError):
+                    pass
             payload = json.dumps(data).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
