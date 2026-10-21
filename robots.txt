@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://cowpooo-source.github.io/ollama-benchmarks/sitemap.xml
